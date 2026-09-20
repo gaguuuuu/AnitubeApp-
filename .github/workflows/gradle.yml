@@ -1,27 +1,26 @@
-
 name: Android CI
 
 on:
   push:
-      paths-ignore:
-          - '**.md'
-          - '**.txt'
-          - '.github/**'
-          - '.idea/**'
-          - '!.github/workflows/**'
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.github/**'
+      - '.idea/**'
+      - '!.github/workflows/**'
   pull_request:
   workflow_dispatch:
+
+# 重複して実行された古いビルドを自動でキャンセルする設定（推奨）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   apk:
     name: Build apk
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ github.token }}
-
       - name: Clone repo
         uses: actions/checkout@v4
 
@@ -40,3 +39,10 @@ jobs:
 
       - name: Build debug apk
         run: ./gradlew assembleDebug
+
+      # 【追加】ビルドされたAPKをGitHubに保存するステップ
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
